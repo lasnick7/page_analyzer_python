@@ -24,6 +24,12 @@ jobs:
         run: |
           make lint
 
+      - name: Set env variables
+        env:
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
+        run: |
+          echo "SECRET_KEY=$SECRET_KEY" >> .env
+
       - name: SonarQubeScan
         uses: SonarSource/sonarqube-scan-action@v5
         env:
