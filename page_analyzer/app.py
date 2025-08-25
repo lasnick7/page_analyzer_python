@@ -19,15 +19,8 @@ from page_analyzer.url_repo import UrlRepo, UrlItem
 load_dotenv()
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
-DATABASE_URL = os.getenv('DATABASE_URL')
 
-conn = None
-try:
-    conn = psycopg2.connect(DATABASE_URL)
-    print("connection")
-except Exception:
-    print("failed")
-repo = UrlRepo(conn)
+repo = UrlRepo()
 
 
 @app.route('/')

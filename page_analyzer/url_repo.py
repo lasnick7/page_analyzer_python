@@ -1,5 +1,6 @@
 import validators
-
+import psycopg2
+import os
 from urllib.parse import urlparse
 from page_analyzer.exceptions import (
     EmptyUrlError, TooLongUrlError, InvalidUrlError
@@ -18,9 +19,11 @@ class UrlItem:
     check_status: Optional[int] = None
 
 
+DATABASE_URL = os.getenv('DATABASE_URL')
+
 class UrlRepo:
-    def __init__(self, conn):
-        self.conn = conn
+    def __init__(self):
+        self.conn = psycopg2.connect(DATABASE_URL)
 
     @staticmethod
     def validate(url):
