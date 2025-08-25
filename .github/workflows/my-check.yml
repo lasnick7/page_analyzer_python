@@ -27,8 +27,10 @@ jobs:
       - name: Set env variables
         env:
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
           echo "SECRET_KEY=$SECRET_KEY" >> .env
+          echo "DATABASE_URL=$DATABASE_URL" >> .env
 
       - name: SonarQubeScan
         uses: SonarSource/sonarqube-scan-action@v5

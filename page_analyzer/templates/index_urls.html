@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %} Анализатор страниц {% endblock %}
+{% block content %}
+    <div class="container-lg mt-3">
+        <h1>Сайты</h1>
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover text-nowrap" data-test="urls">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Имя</th>
+                        <th>Последняя проверка</th>
+                        <th>Код ответа</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in url_items %}
+                    <tr>
+                        <td>{{ item.id }}</td>
+                        <td><a href="{{ url_for('show_url', url_id=item.id) }}">{{ item.name }}</a></td>
+                        <td>{{ item.last_check if item.last_check else "" }}</td>
+                        <td>{{ item.check_status if item.check_status else "" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}
