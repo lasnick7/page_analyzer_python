@@ -94,5 +94,5 @@ class UrlRepo:
                 return res
             except Exception as e:
                 print(f"Error executing SQL: {e}")
-                self.conn.rollback()  # Завершаем транзакцию при ошибке
+                self.conn.rollback()
                 raise
