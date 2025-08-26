@@ -6,7 +6,7 @@ from page_analyzer.exceptions import (
     EmptyUrlError, TooLongUrlError, InvalidUrlError
 )
 from dataclasses import dataclass
-from psycopg2.extras import DictCursor, NamedTupleCursor
+from psycopg2.extras import NamedTupleCursor
 from typing import Optional
 from datetime import datetime
 
@@ -16,7 +16,18 @@ class UrlItem:
     id: Optional[int] = None
     created_at: Optional[datetime] = None
     last_check: Optional[datetime] = None
-    check_status: Optional[int] = None
+    status_code: Optional[int] = None
+
+
+@dataclass
+class CheckItem:
+    id: int
+    status_code: int
+    h1: str
+    title: str
+    description: str
+    created_at: datetime
+    url_id: Optional[int] = None
 
 
 DATABASE_URL = os.getenv('DATABASE_URL')
@@ -40,7 +51,7 @@ class UrlRepo:
         parsed = urlparse(url)
         return f"{parsed.scheme}://{parsed.netloc}"
 
-    def save(self, name):
+    def save_url(self, name):
         with psycopg2.connect(DATABASE_URL) as conn:
             with conn.cursor() as curs:
                 sql = """
@@ -49,6 +60,20 @@ class UrlRepo:
                 RETURNING id;
                 """
                 curs.execute(sql, (name,))
+                id = curs.fetchone()[0]
+            conn.commit()
+            return id
+
+    def save_check(self, url_id, status_code, h1, title, description):
+        with psycopg2.connect(DATABASE_URL) as conn:
+            with conn.cursor() as curs:
+                sql = """
+                INSERT INTO url_checks
+                (url_id, status_code, h1, title, description) VALUES 
+                (%s, %s, %s, %s, %s)
+                RETURNING id;
+                """
+                curs.execute(sql, (url_id, status_code, h1, title, description))
                 id = curs.fetchone()[0]
             conn.commit()
             return id
@@ -88,18 +113,52 @@ class UrlRepo:
             with conn.cursor(cursor_factory=NamedTupleCursor) as curs:
                 try:
                     sql = """
-                    SELECT id, name FROM urls
-                    ORDER BY id DESC;
+                    SELECT 
+                        urls.id, 
+                        urls.name, 
+                        MAX(url_checks.created_at) AS last_check, 
+                        (SELECT status_code
+                        FROM url_checks
+                        WHERE url_id = urls.id
+                        ORDER BY created_at DESC
+                        LIMIT 1) as status_code
+                    FROM urls FULL JOIN url_checks
+                    ON urls.id = url_checks.url_id
+                    GROUP BY urls.id
+                    ORDER BY id DESC; 
                     """
                     curs.execute(sql)
                     res = []
                     for item in curs.fetchall():
                         res.append(UrlItem(
                             id=item.id,
-                            name=item.name
+                            name=item.name,
+                            last_check=item.last_check.isoformat() if item.last_check else "",
+                            status_code=item.status_code
                         ))
                     return res
                 except Exception as e:
                     print(f"Error executing SQL: {e}")
                     conn.rollback()
                     raise
+
+    def get_checks(self, url_id):
+        with psycopg2.connect(DATABASE_URL) as conn:
+            with conn.cursor(cursor_factory=NamedTupleCursor) as curs:
+                sql = """
+                SELECT * FROM url_checks
+                WHERE url_id = %s
+                ORDER BY id DESC
+                """
+                curs.execute(sql, (url_id,))
+                res = []
+                for item in curs.fetchall():
+                    res.append(CheckItem(
+                        id=item.id,
+                        status_code=item.status_code,
+                        h1=item.h1,
+                        title=item.title,
+                        description=item.description,
+                        created_at=item.created_at.isoformat() if item.created_at else ""
+                    ))
+                return res

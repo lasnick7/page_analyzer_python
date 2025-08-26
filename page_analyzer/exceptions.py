@@ -9,7 +9,7 @@ class EmptyUrlError(Exception):
         if self.message:
             return f"EmptyUrlError, {self.message}"
         else:
-            return f"EmptyUrlError, Url should not be empty"
+            return "EmptyUrlError, Url should not be empty"
 
 
 class TooLongUrlError(Exception):
@@ -23,7 +23,7 @@ class TooLongUrlError(Exception):
         if self.message:
             return f"TooLongUrlError, {self.message}"
         else:
-            return f"TooLongUrlError, Url should not be longer than 255 characters"
+            return "TooLongUrlError, Url should not be longer than 255 characters"
 
 
 class InvalidUrlError(Exception):
@@ -37,4 +37,4 @@ class InvalidUrlError(Exception):
         if self.message:
             return f"InvalidUrlError, {self.message}"
         else:
-            return f"InvalidUrlError, Url is not valid"
+            return "InvalidUrlError, Url is not valid"

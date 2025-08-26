@@ -1,7 +1,6 @@
 import os
 
-import psycopg2
-
+import requests
 from flask import (
     Flask,
     render_template,
@@ -12,9 +11,10 @@ from flask import (
     get_flashed_messages
 )
 from dotenv import load_dotenv
+from bs4 import BeautifulSoup
 
 from page_analyzer.exceptions import EmptyUrlError, TooLongUrlError, InvalidUrlError
-from page_analyzer.url_repo import UrlRepo, UrlItem
+from page_analyzer.url_repo import UrlRepo
 
 load_dotenv()
 app = Flask(__name__)
@@ -66,7 +66,7 @@ def add_url():
         flash("Страница уже существует", "info")
         id = url_find.id
     else:
-        id = repo.save(normalized_url)
+        id = repo.save_url(normalized_url)
         flash("Страница успешно добавлена", "success")
 
     return redirect(
@@ -78,8 +78,44 @@ def add_url():
 @app.get('/urls/<url_id>')
 def show_url(url_id):
     url = repo.find_url_by_id(url_id)
+    checks = repo.get_checks(url_id)
     return render_template(
         "show_url.html",
-        url=url
+        url=url,
+        checks=checks
     )
+
+@app.post('/urls/<url_id>/checks')
+def make_check(url_id):
+    url_item = repo.find_url_by_id(url_id)
+    if not url_item:
+        flash('Страница не найдена', 'danger')
+        return redirect(url_for("init_index"), code=302)
+
+    url_name = url_item.name
+    try:
+        r = requests.get(url_name, allow_redirects=True)
+        r.raise_for_status()
+        status_code = r.status_code
+        htm_text = r.text
+        parsed_html = BeautifulSoup(htm_text, "html.parser")
+        h1 = parsed_html.h1.get_text().strip() if parsed_html.h1 else ""
+        title = parsed_html.title.string.strip() if parsed_html.title else ""
+        description_meta = parsed_html.find('meta', attrs={'name': 'description'})
+        description = (
+            description_meta["content"].strip()
+            if description_meta and "content" in description_meta.attrs
+            else ""
+        )
+        repo.save_check(url_id, status_code, h1, title, description)
+        flash("Страница успешно проверена", "success")
+    except Exception:
+        flash("Ошибка при обработке страницы", "danger")
+
+    return redirect(
+        url_for("show_url", url_id=url_id),
+        code=302
+    )
+
+
 
