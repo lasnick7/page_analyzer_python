@@ -32,8 +32,37 @@ def init_index():
     )
 
 
-@app.get('/urls')
-def index_urls():
+@app.route('/urls', methods=['POST', 'GET'])
+def add_url():
+    if request.method == 'POST':
+        url = request.form.get("url", "").strip()
+
+        try:
+            UrlRepo.validate(url)
+
+        except EmptyUrlError:
+            flash("URL не может быть пустым", "danger")
+            return render_template("index.html")
+
+        except TooLongUrlError:
+            flash("URL превышает 255 символов", "danger")
+            return render_template("index.html")
+
+        except InvalidUrlError:
+            flash("Некорректный URL", "danger")
+            return render_template("index.html")
+
+        normalized_url = UrlRepo.normalize_url(url)
+        url_find = repo.find_url_by_name(normalized_url)
+        if url_find:
+            flash("Страница уже существует", "info")
+            id = url_find.id
+        else:
+            id = repo.save_url(normalized_url)
+            flash("Страница успешно добавлена", "success")
+
+        return redirect(url_for("show_url", url_id=id),)
+
     url_items = repo.get_content()
     return render_template(
         "index_urls.html",
@@ -41,38 +70,7 @@ def index_urls():
     )
 
 
-@app.post('/urls')
-def add_url():
-    url = request.form.get("url", "").strip()
-
-    try:
-        UrlRepo.validate(url)
-
-    except EmptyUrlError:
-        flash("URL не может быть пустым", "danger")
-        return render_template("index.html")
-
-    except TooLongUrlError:
-        flash("URL превышает 255 символов", "danger")
-        return render_template("index.html")
-
-    except InvalidUrlError:
-        flash("Некорректный URL", "danger")
-        return render_template("index.html")
-
-    normalized_url = UrlRepo.normalize_url(url)
-    url_find = repo.find_url_by_name(normalized_url)
-    if url_find:
-        flash("Страница уже существует", "info")
-        id = url_find.id
-    else:
-        id = repo.save_url(normalized_url)
-        flash("Страница успешно добавлена", "success")
-
-    return redirect(url_for("show_url", url_id=id),)
-
-
-@app.get('/urls/<url_id>')
+@app.route('/urls/<url_id>')
 def show_url(url_id):
     url = repo.find_url_by_id(url_id)
     checks = repo.get_checks(url_id)
@@ -82,7 +80,7 @@ def show_url(url_id):
         checks=checks
     )
 
-@app.post('/urls/<url_id>/checks')
+@app.route('/urls/<url_id>/checks', methods=['POST'])
 def make_check(url_id):
     url_item = repo.find_url_by_id(url_id)
     if not url_item:
