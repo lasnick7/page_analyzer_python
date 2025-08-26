@@ -2,9 +2,6 @@ import validators
 import psycopg2
 import os
 from urllib.parse import urlparse
-from page_analyzer.exceptions import (
-    EmptyUrlError, TooLongUrlError, InvalidUrlError
-)
 from dataclasses import dataclass
 from psycopg2.extras import NamedTupleCursor
 from typing import Optional
@@ -37,14 +34,12 @@ class UrlRepo:
         self.db = DATABASE_URL
 
     @staticmethod
-    def validate(url):
-        if not url:
-            raise EmptyUrlError
+    def is_valid_url(url):
         if len(url) > 255:
-            raise TooLongUrlError
-        if not validators.url(url):
-            raise InvalidUrlError
-        return True
+            return 'URL превышает 255 символов'
+        elif validators.url(url) is not True:
+            return 'Некорректный URL'
+        return None
 
     @staticmethod
     def normalize_url(url):

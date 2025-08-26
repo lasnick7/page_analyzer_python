@@ -13,7 +13,6 @@ from flask import (
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup
 
-from page_analyzer.exceptions import EmptyUrlError, TooLongUrlError, InvalidUrlError
 from page_analyzer.url_repo import UrlRepo
 
 load_dotenv()
@@ -25,31 +24,17 @@ repo = UrlRepo()
 
 @app.route('/')
 def init_index():
-    f = get_flashed_messages()
-    return render_template(
-        "index.html",
-        tmp_output=f
-    )
+    return render_template("index.html")
 
 
 @app.route('/urls', methods=['POST', 'GET'])
 def add_url():
     if request.method == 'POST':
-        url = request.form.get("url", "").strip()
+        url = request.form.get("url")
 
-        try:
-            UrlRepo.validate(url)
-
-        except EmptyUrlError:
-            flash("URL не может быть пустым", "danger")
-            return render_template("index.html")
-
-        except TooLongUrlError:
-            flash("URL превышает 255 символов", "danger")
-            return render_template("index.html")
-
-        except InvalidUrlError:
-            flash("Некорректный URL", "danger")
+        error = UrlRepo.is_valid_url(url)
+        if error:
+            flash(error, "danger")
             return render_template("index.html")
 
         normalized_url = UrlRepo.normalize_url(url)
