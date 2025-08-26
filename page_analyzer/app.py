@@ -50,15 +50,15 @@ def add_url():
 
     except EmptyUrlError:
         flash("URL не может быть пустым", "danger")
-        return render_template("index.html"), 422
+        return render_template("index.html")
 
     except TooLongUrlError:
         flash("URL превышает 255 символов", "danger")
-        return render_template("index.html"), 422
+        return render_template("index.html")
 
     except InvalidUrlError:
         flash("Некорректный URL", "danger")
-        return render_template("index.html"), 422
+        return render_template("index.html")
 
     normalized_url = UrlRepo.normalize_url(url)
     url_find = repo.find_url_by_name(normalized_url)
@@ -69,10 +69,7 @@ def add_url():
         id = repo.save_url(normalized_url)
         flash("Страница успешно добавлена", "success")
 
-    return redirect(
-        url_for("show_url", url_id=id),
-        code=302
-    )
+    return redirect(url_for("show_url", url_id=id),)
 
 
 @app.get('/urls/<url_id>')
@@ -90,7 +87,7 @@ def make_check(url_id):
     url_item = repo.find_url_by_id(url_id)
     if not url_item:
         flash('Страница не найдена', 'danger')
-        return redirect(url_for("init_index"), code=302)
+        return redirect(url_for("init_index"))
 
     url_name = url_item.name
     try:
@@ -110,12 +107,9 @@ def make_check(url_id):
         repo.save_check(url_id, status_code, h1, title, description)
         flash("Страница успешно проверена", "success")
     except Exception:
-        flash("Ошибка при обработке страницы", "danger")
+        flash("Произошла ошибка при проверке", "danger")
 
-    return redirect(
-        url_for("show_url", url_id=url_id),
-        code=302
-    )
+    return redirect(url_for("show_url", url_id=url_id))
 
 
 
