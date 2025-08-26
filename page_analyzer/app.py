@@ -12,7 +12,7 @@ from flask import (
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup
 load_dotenv()
-from page_analyzer.url_repo import UrlRepo # noqa: E402
+from page_analyzer.url_repo import UrlRepo  # noqa: E402
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')

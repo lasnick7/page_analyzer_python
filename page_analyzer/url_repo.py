@@ -7,6 +7,7 @@ from psycopg2.extras import NamedTupleCursor
 from typing import Optional
 from datetime import datetime
 
+
 @dataclass
 class UrlItem:
     name: str
@@ -129,7 +130,7 @@ class UrlRepo:
                         res.append(UrlItem(
                             id=item.id,
                             name=item.name,
-                            last_check=item.last_check.isoformat() if item.last_check else "", # noqa: E501
+                            last_check=item.last_check.isoformat() if item.last_check else "",  # noqa: E501
                             status_code=item.status_code
                         ))
                     return res
@@ -155,6 +156,6 @@ class UrlRepo:
                         h1=item.h1,
                         title=item.title,
                         description=item.description,
-                        created_at=item.created_at.isoformat() if item.created_at else "" # noqa: E501
+                        created_at=item.created_at.isoformat() if item.created_at else ""  # noqa: E501
                     ))
                 return res
