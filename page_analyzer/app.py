@@ -7,15 +7,13 @@ from flask import (
     request,
     redirect,
     url_for,
-    flash,
-    get_flashed_messages
+    flash
 )
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup
-
+load_dotenv()
 from page_analyzer.url_repo import UrlRepo
 
-load_dotenv()
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 
@@ -30,22 +28,22 @@ def init_index():
 @app.route('/urls', methods=['POST', 'GET'])
 def add_url():
     if request.method == 'POST':
-        url = request.form.get("url")
+        url = request.form.get('url', '').strip()
 
         error = UrlRepo.is_valid_url(url)
         if error:
             flash(error, "danger")
-            return render_template("index.html")
+            return render_template("index.html"), 422
 
         normalized_url = UrlRepo.normalize_url(url)
         url_find = repo.find_url_by_name(normalized_url)
         if url_find:
             flash("Страница уже существует", "info")
             id = url_find.id
-        else:
-            id = repo.save_url(normalized_url)
-            flash("Страница успешно добавлена", "success")
+            return redirect(url_for("show_url", url_id=id), )
 
+        id = repo.save_url(normalized_url)
+        flash("Страница успешно добавлена", "success")
         return redirect(url_for("show_url", url_id=id),)
 
     url_items = repo.get_content()
