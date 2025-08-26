@@ -12,7 +12,7 @@ from flask import (
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup
 load_dotenv()
-from page_analyzer.url_repo import UrlRepo
+from page_analyzer.url_repo import UrlRepo # noqa: E402
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
@@ -63,6 +63,7 @@ def show_url(url_id):
         checks=checks
     )
 
+
 @app.route('/urls/<url_id>/checks', methods=['POST'])
 def make_check(url_id):
     url_item = repo.find_url_by_id(url_id)
@@ -78,8 +79,12 @@ def make_check(url_id):
         htm_text = r.text
         parsed_html = BeautifulSoup(htm_text, "html.parser")
         h1 = parsed_html.h1.get_text().strip() if parsed_html.h1 else ""
-        title = parsed_html.title.string.strip() if parsed_html.title else ""
-        description_meta = parsed_html.find('meta', attrs={'name': 'description'})
+        title = (parsed_html.title.string.strip()
+                 if parsed_html.title else ""
+                 )
+        description_meta = parsed_html.find(
+            'meta', attrs={'name': 'description'}
+        )
         description = (
             description_meta["content"].strip()
             if description_meta and "content" in description_meta.attrs
@@ -91,6 +96,3 @@ def make_check(url_id):
         flash("Произошла ошибка при проверке", "danger")
 
     return redirect(url_for("show_url", url_id=url_id))
-
-
-
