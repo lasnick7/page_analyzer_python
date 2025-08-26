@@ -19,7 +19,7 @@
                         <td>{{ item.id }}</td>
                         <td><a href="{{ url_for('show_url', url_id=item.id) }}">{{ item.name }}</a></td>
                         <td>{{ item.last_check if item.last_check else "" }}</td>
-                        <td>{{ item.check_status if item.check_status else "" }}</td>
+                        <td>{{ item.status_code if item.status_code else "" }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
