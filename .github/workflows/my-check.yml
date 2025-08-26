@@ -31,12 +31,3 @@ jobs:
         run: |
           echo "SECRET_KEY=$SECRET_KEY" >> .env
           echo "DATABASE_URL=$DATABASE_URL" >> .env
-
-      - name: SonarQubeScan
-        uses: SonarSource/sonarqube-scan-action@v5
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        with:
-          args: >
-            -Dsonar.projectKey=lasnick7_python-project-83
-            -Dsonar.organization=lasnick7
