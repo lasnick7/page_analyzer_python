@@ -12,7 +12,7 @@ from flask import (
 from dotenv import load_dotenv
 
 from page_analyzer.repository import UrlRepo  # noqa: E402
-from  page_analyzer.utils import is_valid_url, parse_response, normalize_url
+from page_analyzer.utils import is_valid_url, parse_response, normalize_url
 
 
 load_dotenv()
