@@ -10,14 +10,17 @@ from flask import (
     flash
 )
 from dotenv import load_dotenv
-from bs4 import BeautifulSoup
-load_dotenv()
-from page_analyzer.url_repo import UrlRepo  # noqa: E402
 
+from page_analyzer.repository import UrlRepo  # noqa: E402
+from  page_analyzer.utils import is_valid_url, parse_response, normalize_url
+
+
+load_dotenv()
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+DATABASE_URL = os.getenv('DATABASE_URL')
 
-repo = UrlRepo()
+repo = UrlRepo(database_url=DATABASE_URL)
 
 
 @app.route('/')
@@ -30,12 +33,12 @@ def add_url():
     if request.method == 'POST':
         url = request.form.get('url', '').strip()
 
-        error = UrlRepo.is_valid_url(url)
+        error = is_valid_url(url)
         if error:
             flash(error, "danger")
             return render_template("index.html"), 422
 
-        normalized_url = UrlRepo.normalize_url(url)
+        normalized_url = normalize_url(url)
         url_find = repo.find_url_by_name(normalized_url)
         if url_find:
             flash("Страница уже существует", "info")
@@ -74,22 +77,7 @@ def make_check(url_id):
     url_name = url_item.name
     try:
         r = requests.get(url_name, allow_redirects=True)
-        r.raise_for_status()
-        status_code = r.status_code
-        htm_text = r.text
-        parsed_html = BeautifulSoup(htm_text, "html.parser")
-        h1 = parsed_html.h1.get_text().strip() if parsed_html.h1 else ""
-        title = (parsed_html.title.string.strip()
-                 if parsed_html.title else ""
-                 )
-        description_meta = parsed_html.find(
-            'meta', attrs={'name': 'description'}
-        )
-        description = (
-            description_meta["content"].strip()
-            if description_meta and "content" in description_meta.attrs
-            else ""
-        )
+        status_code, h1, title, description = parse_response(r)
         repo.save_check(url_id, status_code, h1, title, description)
         flash("Страница успешно проверена", "success")
     except Exception:

@@ -1,7 +1,4 @@
-import validators
 import psycopg2
-import os
-from urllib.parse import urlparse
 from dataclasses import dataclass
 from psycopg2.extras import NamedTupleCursor
 from typing import Optional
@@ -28,28 +25,12 @@ class CheckItem:
     url_id: Optional[int] = None
 
 
-DATABASE_URL = os.getenv('DATABASE_URL')
-
-
 class UrlRepo:
-    def __init__(self):
-        self.db = DATABASE_URL
-
-    @staticmethod
-    def is_valid_url(url):
-        if len(url) > 255:
-            return 'URL превышает 255 символов'
-        elif validators.url(url) is not True:
-            return 'Некорректный URL'
-        return None
-
-    @staticmethod
-    def normalize_url(url):
-        parsed = urlparse(url)
-        return f"{parsed.scheme}://{parsed.netloc}"
+    def __init__(self, database_url):
+        self.db = database_url
 
     def save_url(self, name):
-        with psycopg2.connect(DATABASE_URL) as conn:
+        with psycopg2.connect(self.db) as conn:
             with conn.cursor() as curs:
                 sql = """
                 INSERT INTO urls
@@ -62,7 +43,7 @@ class UrlRepo:
             return id
 
     def save_check(self, url_id, status_code, h1, title, description):
-        with psycopg2.connect(DATABASE_URL) as conn:
+        with psycopg2.connect(self.db) as conn:
             with conn.cursor() as curs:
                 sql = """
                 INSERT INTO url_checks
@@ -76,7 +57,7 @@ class UrlRepo:
             return id
 
     def find_url_by_name(self, name):
-        with psycopg2.connect(DATABASE_URL) as conn:
+        with psycopg2.connect(self.db) as conn:
             with conn.cursor(cursor_factory=NamedTupleCursor) as curs:
                 sql = """
                 SELECT * FROM urls
@@ -91,7 +72,7 @@ class UrlRepo:
                 ) if row else None
 
     def find_url_by_id(self, id):
-        with psycopg2.connect(DATABASE_URL) as conn:
+        with psycopg2.connect(self.db) as conn:
             with conn.cursor(cursor_factory=NamedTupleCursor) as curs:
                 sql = """
                 SELECT * FROM urls
@@ -106,7 +87,7 @@ class UrlRepo:
                 ) if row else None
 
     def get_content(self):
-        with psycopg2.connect(DATABASE_URL) as conn:
+        with psycopg2.connect(self.db) as conn:
             with conn.cursor(cursor_factory=NamedTupleCursor) as curs:
                 try:
                     sql = """
@@ -140,7 +121,7 @@ class UrlRepo:
                     raise
 
     def get_checks(self, url_id):
-        with psycopg2.connect(DATABASE_URL) as conn:
+        with psycopg2.connect(self.db) as conn:
             with conn.cursor(cursor_factory=NamedTupleCursor) as curs:
                 sql = """
                 SELECT * FROM url_checks
